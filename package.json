@@ -1,24 +1,24 @@
 {
-  "name": "event-plugmix",
-  "version": "1.0.0",
-  "description": "",
-  "main": "event-plugmix.js",
-  "dependencies": {
-    "co": "^3.1.0",
-    "co-glob": "0.0.2"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rektide/event-plugmix"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/rektide/event-plugmix/issues"
-  },
-  "homepage": "https://github.com/rektide/event-plugmix"
+	"name": "plugmix",
+	"version": "1.0.0",
+	"description": "",
+	"main": "plugmix.js",
+	"dependencies": {
+		"co": "^3.1.0",
+		"co-glob": "0.0.2"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "rektide de la faye",
+	"license": "X",
+	"bugs": {
+		"url": "https://github.com/rektide/plugmix/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rektide/plugmix"
+	},
+	"homepage": "https://github.com/rektide/plugmix"
 }
