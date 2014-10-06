@@ -1,18 +1,24 @@
 var co= require('co'),
+  fs= require('co-fs'),
   glob= require('co-glob'),
   path= require('path')
 
-function*globSlot(o, slot){
-	for(var p of o[slot]){
-		yield co(p)
-	}
+function _readdir(dir){
+	return fs.readdir(dir)
 }
 
-function*dir(dirs){
-	for(var dir of dirs){
-		yield fs.readDir(dir)
+var dir= co(function*dir(dirs){
+	var matches = yield dirs.map(_readdir)
+	var res= []
+	for(var d in dirs){
+		var dir= dirs[d],
+		  match= matches[d]
+		for(var m in match){
+			res.push(dir+path.sep+match[m])
+		}
 	}
-}
+	return res
+})
 
 function startsWith(phrases){
 	if(phrases.length)
@@ -54,11 +60,20 @@ function startsWith(phrases){
 		})
 }
 
+function boundPaths(candidates, minimum, resolve){
+	return candidates.filter(resolve?function(filename){
+		var resolve= path.resolve(resolve, filename)
+		return resolve.startsWith(minimum)
+	}:function(filename){
+		return filename.startsWith(minimum)
+	})
+}
+
 function*find(module, prefix){
-	var mainPath= require.main.paths[0]
-	var paths= yield globSlot( module, 'paths')
-	var mainPaths= yield startsWith(mainPath)(paths)
-	var dirs= yield dir(paths)
+	var mainPath= require.main.paths[0],
+	  moduleDir= path.dirname(module. filename)
+	var files= boundPaths(module.paths, mainPath)
+	var dirs= yield dir(files)
 
 	var prefix= prefix|| require('path').basename(module.id)
 	var moduleMatches= yield startsWith(prefix)(dirs)
@@ -66,4 +81,5 @@ function*find(module, prefix){
 }
 
 module.export= find
+module.exports.dir= dir
 module.export.moduleWalk= find

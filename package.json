@@ -1,15 +1,18 @@
 {
 	"name": "plugmix",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "",
 	"main": "plugmix.js",
 	"dependencies": {
 		"co": "^3.1.0",
+		"co-fs": "^1.2.0",
 		"co-glob": "0.0.2"
 	},
-	"devDependencies": {},
+	"devDependencies": {
+		"tape": "^3.0.0"
+	},
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "node --harmony node_modules/.bin/tape test/*js"
 	},
 	"author": "rektide de la faye",
 	"license": "X",
