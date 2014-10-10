@@ -1,27 +1,31 @@
 {
-	"name": "plugmix",
-	"version": "1.0.1",
-	"description": "",
-	"main": "plugmix.js",
-	"dependencies": {
-		"co": "^3.1.0",
-		"co-fs": "^1.2.0",
-		"co-glob": "0.0.2"
-	},
-	"devDependencies": {
-		"tape": "^3.0.0"
-	},
-	"scripts": {
-		"test": "node --harmony node_modules/.bin/tape test/*js"
-	},
-	"author": "rektide de la faye",
-	"license": "X",
-	"bugs": {
-		"url": "https://github.com/rektide/plugmix/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/rektide/plugmix"
-	},
-	"homepage": "https://github.com/rektide/plugmix"
+  "name": "plugmix",
+  "version": "1.0.1",
+  "description": "",
+  "main": "plugmix.js",
+  "dependencies": {
+    "chanel": "^2.2.0",
+    "co": "^3.1.0",
+    "co-fs": "^1.2.0",
+    "co-gather": "0.0.1",
+    "co-glob": "0.0.2",
+    "co-tape": "^1.0.0",
+    "tape": "^3.0.0"
+  },
+  "devDependencies": {
+    "tape": "^3.0.0"
+  },
+  "scripts": {
+    "test": "node --harmony tape test/*js"
+  },
+  "author": "rektide de la faye",
+  "license": "X",
+  "bugs": {
+    "url": "https://github.com/rektide/plugmix/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rektide/plugmix"
+  },
+  "homepage": "https://github.com/rektide/plugmix"
 }

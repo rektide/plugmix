@@ -1,6 +1,9 @@
+'use strict';
+
 var co= require('co'),
   fs= require('co-fs'),
   glob= require('co-glob'),
+  gather= require('co-gather'),
   path= require('path')
 
 function _readdir(dir){
@@ -8,10 +11,21 @@ function _readdir(dir){
 }
 
 var dir= co(function*dir(dirs){
-	var matches = yield dirs.map(_readdir)
+	var matches= []
+	var dirs2= []
+	for(var i in dirs){
+		var matcher= _readdir(dirs[i])
+		if(matcher){
+			matches.push(matcher)
+			dirs2.push(dirs[i])
+		}
+	}
+console.log('MATCHES1', matches)
+	matches= yield matches
+console.log('MATCHES2', matches)
 	var res= []
-	for(var d in dirs){
-		var dir= dirs[d],
+	for(var d in dirs2){
+		var dir= dirs2[d],
 		  match= matches[d]
 		for(var m in match){
 			res.push(dir+path.sep+match[m])
@@ -21,42 +35,62 @@ var dir= co(function*dir(dirs){
 })
 
 function startsWith(phrases){
-	if(phrases.length)
-		return (function*winnow(exprs){
-			EXPR: for(var expr of exprs)
-				for(var phrase of phrases)
+	if(phrases instanceof Array)
+		return (function startsWith(exprs){
+			var res= []
+			EXPR: for(var i in exprs){
+				var expr= exprs[i]
+				for(var j in phrases){
+					var phrase= phrases[j]
 					if(expr.startsWith(phrase)){
-						yield expr
+						res.push(expr)
 						continue EXPR
 					}
+				}
+			}
+			return res
 		})
 	else
-		return (function*winnow(exprs){
-			for(var expr of exprs)
+		return (function startsWith(exprs){
+			var res= []
+			for(var i in exprs){
+				var expr= exprs[i]
 				if(expr.startsWith(phrases)){
-					yield expr
+					res.push(expr)
 					continue
 				}
+			}
+			return res
 		})
 }
 
-function startsWith(phrases){
+function contains(phrases){
 	if(phrases.length)
-		return (function*winnow(exprs){
-			EXPR: for(var expr of exprs)
-				for(var phrase of phrases)
+		return (function winnow(exprs){
+			var res= []
+			EXPR: for(var i in exprs){
+				var expr= exprs[i]
+				for(var j in phrases){
+					var phrase= phrases[j]
 					if(expr.contains(phrase)){
-						yield expr
+						res.push(expr)
 						continue EXPR
 					}
+				}
+			}
+			return res
 		})
 	else
-		return (function*winnow(exprs){
-			for(var expr of exprs)
+		return (function winnow(exprs){
+			var res= []
+			for(var i in exprs){
+				var expr= exprs[i]
 				if(expr.contains(phrases)){
-					yield expr
+					res.push(expr)
 					continue
 				}
+			}
+			return res
 		})
 }
 
@@ -72,14 +106,20 @@ function boundPaths(candidates, minimum, resolve){
 function*find(module, prefix){
 	var mainPath= require.main.paths[0],
 	  moduleDir= path.dirname(module. filename)
+console.log('paths', mainPath, moduleDir)
 	var files= boundPaths(module.paths, mainPath)
+console.log('files', files)
 	var dirs= yield dir(files)
+console.log('dirs', dirs)
 
 	var prefix= prefix|| require('path').basename(module.id)
-	var moduleMatches= yield startsWith(prefix)(dirs)
+	var moduleMatches= startsWith(prefix)(dirs)
 	return moduleMatches
 }
 
-module.export= find
+module.exports= find
 module.exports.dir= dir
-module.export.moduleWalk= find
+module.exports.startsWith= startsWith
+module.exports.contains= contains
+module.exports.boundPaths= boundPaths
+module.exports.moduleWalk= find
