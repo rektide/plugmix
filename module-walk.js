@@ -20,9 +20,7 @@ var dir= co(function*dir(dirs){
 			dirs2.push(dirs[i])
 		}
 	}
-console.log('MATCHES1', matches)
 	matches= yield matches
-console.log('MATCHES2', matches)
 	var res= []
 	for(var d in dirs2){
 		var dir= dirs2[d],
@@ -36,90 +34,104 @@ console.log('MATCHES2', matches)
 
 function startsWith(phrases){
 	if(phrases instanceof Array)
-		return (function startsWith(exprs){
-			var res= []
+		return (function*startsWith(exprs){
 			EXPR: for(var i in exprs){
 				var expr= exprs[i]
 				for(var j in phrases){
 					var phrase= phrases[j]
 					if(expr.startsWith(phrase)){
-						res.push(expr)
+						yield expr
 						continue EXPR
 					}
 				}
 			}
-			return res
 		})
 	else
-		return (function startsWith(exprs){
-			var res= []
+		return (function*startsWith(exprs){
 			for(var i in exprs){
 				var expr= exprs[i]
 				if(expr.startsWith(phrases)){
-					res.push(expr)
-					continue
+					yield expr
 				}
 			}
-			return res
 		})
 }
 
 function contains(phrases){
 	if(phrases.length)
-		return (function winnow(exprs){
-			var res= []
+		return (function*winnow(exprs){
 			EXPR: for(var i in exprs){
 				var expr= exprs[i]
 				for(var j in phrases){
 					var phrase= phrases[j]
 					if(expr.contains(phrase)){
-						res.push(expr)
+						yield expr
 						continue EXPR
 					}
 				}
 			}
-			return res
 		})
 	else
-		return (function winnow(exprs){
-			var res= []
+		return (function*winnow(exprs){
 			for(var i in exprs){
 				var expr= exprs[i]
 				if(expr.contains(phrases)){
-					res.push(expr)
-					continue
+					yield expr
 				}
 			}
-			return res
 		})
 }
 
-function boundPaths(candidates, minimum, resolve){
-	return candidates.filter(resolve?function(filename){
-		var resolve= path.resolve(resolve, filename)
-		return resolve.startsWith(minimum)
-	}:function(filename){
-		return filename.startsWith(minimum)
+function*explode(filename){
+	var prev= filename
+	do{
+		yield filename
+		prev= filename
+		filename= path.dirname(filename)
+	}while(prev != filename)
+}
+
+function predicate(fn){
+	return (function*predicate(exprs){
+		if(!exprs.length)
+			exprs= [exprs]
+		for(var i in exprs){
+			var expr= exprs[i]
+			if(fn.call(this, expr)){
+				yield expr
+			}
+		}
 	})
 }
 
-function*find(module, prefix){
-	var mainPath= require.main.paths[0],
-	  moduleDir= path.dirname(module. filename)
-console.log('paths', mainPath, moduleDir)
-	var files= boundPaths(module.paths, mainPath)
-console.log('files', files)
-	var dirs= yield dir(files)
-console.log('dirs', dirs)
+function map(fn){
+	return function*(iter){
+		var val
+		do{
+			val= iter.next()
+			var outp= fn.call(this, val.value)
+		}while(!val.done)
+	}
+}
 
-	var prefix= prefix|| require('path').basename(module.id)
-	var moduleMatches= startsWith(prefix)(dirs)
-	return moduleMatches
+function*find(module, prefix){
+
+	// recurse up module until we arrive back at a maindir
+	var isMainDir= startsWith(require.main.paths),
+	  moduleDir= path.dirname(module.filename),
+	  top
+	for(var dir of explode(moduleDir)){
+		var iter= isMainDir([dir+'/node_modules']),
+		  first= iter.next()
+		yield dir
+		if(first.value){
+			break;
+		}
+	}
 }
 
 module.exports= find
 module.exports.dir= dir
 module.exports.startsWith= startsWith
 module.exports.contains= contains
-module.exports.boundPaths= boundPaths
 module.exports.moduleWalk= find

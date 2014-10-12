@@ -8,9 +8,10 @@ var fixture= require('./fixture').o1
 
 // utility tests
 
+var testdir= path.dirname(module.filename)
+
 tape('module-walk: dir finds files', function(t){
-	var testdir= path.dirname(module.filename),
-	  topdir= path.dirname(testdir),
+	var topdir= path.dirname(testdir),
 	  expect= ['./fixture.js', './module-walk-1.js', '../package.json', '../plugmix.js']
 	    .map(function(i){
 	      	return path.resolve(testdir, i)
@@ -26,22 +27,31 @@ tape('module-walk: dir finds files', function(t){
 })
 
 tape('module-walk: startsWith', function(t){
-	t.plan(2)
+	t.plan(6)
 	var tries= ['foo', 'fooa', ' foo', ' fooa', 'bfoo', 'foob', 'nap', 'nak'],
 	  okFoo= ['foo', 'fooa', 'foob'],
 	  more= ['fooa', 'nope', 'na'],
 	  okMore= ['fooa', 'nap', 'nak']
 	var triedFoo= moduleWalk.startsWith('foo')(tries)
-	t.deepEqual(triedFoo, okFoo, 'startsWith works with a single phrase')
+	equalIter(t, triedFoo, okFoo, 'startsWith works with a single phrase')
 	var triedMore= moduleWalk.startsWith(more)(tries)
-	t.deepEqual(triedMore, okMore, 'startsWith works with multiple phrases')
-})
-
-tape('module-walk: boundPaths', function(t){
-	t.end()
+	equalIter(t, triedMore, okMore, 'startsWith works with multiple phrases')
 })
 
 tape('module-walk', cotape(function*(t){
+	var found= moduleWalk(module, 'plugmix')
+	t.equal(found.next().value, testdir, 'walks test dir')
+	t.equal(found.next().value, path.dirname(testdir), 'walks top dir')
+	var last= found.next()
+	t.equal(last.value, undefined, 'walk only has two entries')
+	t.equal(last.done, true, 'walk completes')
 	t.end()
-	//var found= yield moduleWalk(module, 'plugmix')
 }))
+
+
+function equalIter(t, iter, expects, desc){
+	var i= 0
+	for(var o of iter){
+		t.deepEqual(o, expects[i++], desc)
+	}
+}
