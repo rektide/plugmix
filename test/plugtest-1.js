@@ -1,8 +1,7 @@
-var tape= require('tape')
+module.exports= function(o){
+	o.i += 1024
+}
 
-
-/*
-tape('idunno', function(t){
-		
-})
-*/
+module.exports.plugtest= function(o){
+	o.i += 1
+}

@@ -136,8 +136,11 @@ function *moduleWalk(module, prefix){
 	})
 }
 
+var m= moduleWalk
+
 module.exports= co(moduleWalk)
 module.exports.moduleWalk= module.exports
+module.exports.moduleGen= m
 module.exports.dir= dir
 module.exports.coDir= co(dir)
 module.exports.startsWith= startsWith

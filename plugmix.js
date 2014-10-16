@@ -1,51 +1,49 @@
 var co= require('co'),
-  mixes= require('./module-walk'),
   events= require('events'),
+  moduleWalk= require('./module-walk'),
   path= require('path')
 
 function tries(module, mix){
+	var plugmix
 	try{
-		var mod= require(module+path.sep+'plugmix')
-		if(mod instanceof Function){
-			return mod
-		}else{
-			var plugmix= mix|| module.exports.mix
+		var child= module+path.sep+mix,
+		  mod= require(child)
+		if(mod){
+			plugmix= mix||module.exports.mix
 			if(mod[plugmix]){
+				return mod[plugmix]
+			}else if(mod instanceof Function){
 				return mod
 			}
 		}
 	}catch(ex){}
 	try{
-		var mod= require(module),
-		  plugmix= mix||module.exports.mix
+		var mod= require(module)
+		plugmix= plugmix||mix||module.exports.mix
 		if(mod && mod[plugmix] instanceof Function){
-			return mod.plugmix
+			return mod[plugmix]
 		}
 	}catch(ex){}
 }
 
-function req(modules){
-	var val
-	for(var mod of modules){
-		if(mod.filename){
-			return mod
-		}else if(!!(val = tries(mod))){
-			return val
+
+function mix(module, prefix, done){
+	moduleWalk(module, prefix, function(err, names){
+		if(err){
+			done(err)
+			return
 		}
-	}
+		var res= []
+		for(var modName in names){
+			var name= names[modName]
+			var mod = tries(name, prefix)
+			if(!mod)
+				continue
+			res.push(mod)
+		}
+		done(undefined, res)
+	})
 }
 
-function*mix(module, prefix, o){
-	o= o|| module
-	var module_names= yield require('./module-walk')(module, prefix)
-	for(var modName in module_names){
-		var mod = req(modName)
-		if(!mod)
-			continue
-		mod(o)
-		yield mod
-	}
-}
-
-module.exports= co(mix)
+module.exports= mix
 module.exports.mix= 'plugmix'
