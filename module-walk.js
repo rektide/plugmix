@@ -4,33 +4,28 @@ var co= require('co'),
   fs= require('co-fs'),
   glob= require('co-glob'),
   gather= require('co-gather'),
-  path= require('path')
+  path= require('path'),
+  thunkify= require('thunkify-wrap')
 
-function _readdir(dir){
-	return fs.readdir(dir)
+var _readdir= function(dir){
+	return function(cb){
+		fs.readdir(dir, cb)
+	}
 }
 
-var dir= co(function*dir(dirs){
-	var matches= []
-	var dirs2= []
-	for(var i in dirs){
-		var matcher= _readdir(dirs[i])
-		if(matcher){
-			matches.push(matcher)
-			dirs2.push(dirs[i])
-		}
-	}
-	matches= yield matches
+var dir= function*dir(dirs){
+	var got= dirs.map(_readdir)
+	var matches= yield got
 	var res= []
-	for(var d in dirs2){
-		var dir= dirs2[d],
+	for(var d in dirs){
+		var dir= dirs[d],
 		  match= matches[d]
 		for(var m in match){
 			res.push(dir+path.sep+match[m])
 		}
 	}
 	return res
-})
+}
 
 function startsWith(phrases){
 	if(phrases instanceof Array)
@@ -114,12 +109,11 @@ function map(fn){
 	}
 }
 
-function*find(module, prefix){
-
+/// search from a given module up until it finds the first intersection with the main module
+function*findPlugmixRoots(module){
 	// recurse up module until we arrive back at a maindir
 	var isMainDir= startsWith(require.main.paths),
-	  moduleDir= path.dirname(module.filename),
-	  top
+	  moduleDir= path.dirname(module.filename)
 	for(var dir of explode(moduleDir)){
 		var iter= isMainDir([dir+'/node_modules']),
 		  first= iter.next()
@@ -130,8 +124,22 @@ function*find(module, prefix){
 	}
 }
 
-module.exports= find
+function *moduleWalk(module, prefix){
+	var roots= []
+	for(var root of findPlugmixRoots(module)){
+		roots.push(root)
+	}
+	var files= yield dir(roots)
+	return files.filter(function(name, i){
+		var ok= path.basename(name).startsWith(prefix)
+		return ok
+	})
+}
+
+module.exports= co(moduleWalk)
+module.exports.moduleWalk= module.exports
 module.exports.dir= dir
+module.exports.coDir= co(dir)
 module.exports.startsWith= startsWith
 module.exports.contains= contains
-module.exports.moduleWalk= find
+module.exports.findPlugmixRoots= findPlugmixRoots
